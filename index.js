@@ -20,8 +20,8 @@ const get1Medicamentos50 = async (req,res)=>{
 
 const getProveedores = async (req,res)=>{
     const collection = db.collection('Medicamentos');
-    const projection = { projection: { "proveedor.nombre": 1, "proveedor.contacto": 1, "_id": 0 } }; 
-    const data = await collection.find({}, projection).toArray();
+    //const projection = { projection: { "proveedor.nombre": 1, "proveedor.contacto": 1, "_id": 0 } }; 
+    const data = await collection.distinct("proveedor");
     res.json(data)
 }
 
@@ -38,15 +38,34 @@ const get4Receta1 = async (req,res)=>{
     res.json(findResult)
 }
 
-const getVParac = async (req,res)=>{
-    const collection = db.collection('Ventas');
-    const total = await collection.count({"medicamentosVendidos.nombreMedicamento": "Paracetamol"});
-    const data = await collection.find({"medicamentosVendidos.nombreMedicamento": "Paracetamol"}).toArray();
-    res.json({
-        total: total,
-        datos: [data]
-    })
-}
+const getVParac = async (req, res) => {
+    try {
+      const collection = db.collection('Ventas');
+      const data = await collection.aggregate([
+        {
+          $unwind: "$medicamentosVendidos" //desenvolver array
+        },
+        {
+          $match: { "medicamentosVendidos.nombreMedicamento": "Paracetamol" } // filtra
+        },
+        {
+          $group: {
+            _id: null,
+            ventas: {
+              $sum: {
+                $multiply: ["$medicamentosVendidos.cantidadVendida", "$medicamentosVendidos.precio"] // multiplica
+              }
+            }
+          }
+        }
+      ]).toArray();
+      res.json({ Medicamento: 'paracetamol', totalVentas: data[0].ventas});
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Errooooooor :(" });
+    }
+  };
+  
 
 const get6MedicamentosCad1 = async (req,res)=>{
     const collection = db.collection('Medicamentos');
@@ -61,12 +80,12 @@ const getMedicamentosVproveedor = async (req,res)=>{
     let totales = [0,0,0]
     data.map((e)=>{
         if(e.proveedor.nombre == 'ProveedorA'){
-            totales[0] = totales[0] + e.medicamentosComprados[0].cantidadComprada;
+            totales[0] += e.medicamentosComprados[0].cantidadComprada;
         }
         if(e.proveedor.nombre == 'ProveedorB'){
-            totales[1] = totales[1] + e.medicamentosComprados[0].cantidadComprada
+            totales[1] += e.medicamentosComprados[0].cantidadComprada
         }
-        else {totales[2] = totales[2] + e.medicamentosComprados[0].cantidadComprada}
+        else {totales[2] += e.medicamentosComprados[0].cantidadComprada}
     })
     const dataComprasP = [
         {proveedorA: totales[0]},
@@ -74,11 +93,33 @@ const getMedicamentosVproveedor = async (req,res)=>{
         {proveedorC: totales[2]},
     ]
     //https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/
+    //https://www.mongodb.com/docs/v7.0/reference/method/
     res.json({
-        Contacto: dataComprasP
+        CantidadVendida: dataComprasP
     })
 }
 
+/* const getMedicamentosVproveedor = async (req,res)=>{
+    const collection = db.collection('Compras');
+    const proveedores = ["ProveedorA", "ProveedorB", "ProveedorC"];
+    const data = await collection.aggregate([
+        {
+          $unwind: "$medicamentosComprados" //desenvolver array
+        },
+        {
+          $match: { "proveedor.nombre": {$in:proveedores}} // filtra
+        },
+        {
+            $group: {
+              _id: "$medicamentosComprados.nombreMedicamento",
+              totalCantidadComprada: { $sum: "medicamentosComprados.cantidadComprada" }
+            }
+        }
+      ]).toArray();
+      console.log(data);
+    res.json(data)
+}
+ */
 //end points
 app.get('/api/medicamentos/-50', get1Medicamentos50) /** 1 */
 app.get('/api/proveedores', getProveedores) /** 2 */
@@ -87,5 +128,6 @@ app.get('/api/ventas/receta1Ene', get4Receta1) /** 4 */
 app.get('/api/ventas/ventaParac', getVParac) /** 5 */
 app.get('/api/medicamentos/Cad1', get6MedicamentosCad1) /** 6 */
 app.get('/api/ventas/proveedores', getMedicamentosVproveedor) /** 7 */
+//app.get('/api/ventas/total', getTotalMedicamentos) /** 8 */
 
 app.listen(3309)
