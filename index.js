@@ -20,11 +20,9 @@ const get1Medicamentos50 = async (req,res)=>{
 
 const getProveedores = async (req,res)=>{
     const collection = db.collection('Medicamentos');
-    const data = await collection.find().toArray();
-    const infoProvee = data.map((e)=>{return e.proveedor})
-    res.json({
-        Contacto: infoProvee
-    })
+    const projection = { projection: { "proveedor.nombre": 1, "proveedor.contacto": 1, "_id": 0 } }; 
+    const data = await collection.find({}, projection).toArray();
+    res.json(data)
 }
 
 const get3MedicamentosPrA = async (req,res)=>{
@@ -75,6 +73,7 @@ const getMedicamentosVproveedor = async (req,res)=>{
         {proveedorB: totales[1]},
         {proveedorC: totales[2]},
     ]
+    //https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/
     res.json({
         Contacto: dataComprasP
     })
@@ -87,6 +86,6 @@ app.get('/api/medicamentos/PrA', get3MedicamentosPrA) /** 3 */
 app.get('/api/ventas/receta1Ene', get4Receta1) /** 4 */
 app.get('/api/ventas/ventaParac', getVParac) /** 5 */
 app.get('/api/medicamentos/Cad1', get6MedicamentosCad1) /** 6 */
-app.get('/api/ventas/proveedores', getMedicamentosVproveedor) /** 7 buscar el name de cada proveee y sumar sus ventas a la farmacia */
+app.get('/api/ventas/proveedores', getMedicamentosVproveedor) /** 7 */
 
 app.listen(3309)
