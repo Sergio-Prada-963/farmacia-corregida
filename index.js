@@ -1,4 +1,4 @@
-const {MongoClient} = require('mongodb');
+const {MongoClient, Collection} = require('mongodb');
 const express = require('express')
 const app = express()
 
@@ -118,6 +118,70 @@ const getMedicamentosVproveedor = async (req,res)=>{
       ]).toArray();
       console.log(data);
     res.json(data)
+} */
+
+const getTotalMedicamentos = async(req,res)=>{
+  try {
+    const collection = db.collection('Ventas');
+    const data = await collection.aggregate(
+      [
+        {
+          $unwind: "$medicamentosVendidos" //desenvolver array
+        },
+        {
+          $group:{
+            _id: null,
+            total: {$sum: "$medicamentosVendidos.precio"},
+          }
+        }
+      ]
+    ).toArray()
+    res.json({TotalVentas: data[0].total})
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const getNoVendidos = async(req,res)=>{
+  try {
+    const MedicamentosNo = db.collection('Medicamentos')
+    const data = await MedicamentosNo.aggregate([
+      {
+        $lookup:{
+          from: 'Ventas',
+          localField: "nombre",
+          foreignField: "medicamentosVendidos.nombreMedicamento",
+          as: "diferencia"
+        }
+      },
+      {
+          $match: {
+              "diferencia": [] // Encuentra documentos que no tienen datos en la segunda colección
+          }
+      }
+    ]).toArray()
+    res.json({medicamentosNovendidos: data})
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const getMascaro = async(req,res)=>{
+  try {
+    const collection = db.collection('Medicamentos')
+    const data = await collection.aggregate([{$sort: {"precio": -1}},{$limit: 1}]).toArray()
+    res.json({masCaro:data})
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+/* const getMedicamentosPro = async (req,res) = >{
+  try {
+    const collection = db.collection('')
+  } catch (error) {
+    console.log(error);
+  }
 }
  */
 //end points
@@ -128,6 +192,9 @@ app.get('/api/ventas/receta1Ene', get4Receta1) /** 4 */
 app.get('/api/ventas/ventaParac', getVParac) /** 5 */
 app.get('/api/medicamentos/Cad1', get6MedicamentosCad1) /** 6 */
 app.get('/api/ventas/proveedores', getMedicamentosVproveedor) /** 7 */
-//app.get('/api/ventas/total', getTotalMedicamentos) /** 8 */
+app.get('/api/ventas/total', getTotalMedicamentos) /** 8 */
+app.get('/api/noVendidos', getNoVendidos) /** 9 */
+app.get('/api/masCaro', getMascaro) /** 10 */
+app.get('/api/medicamentosPro', getMedicamentosPro) /** 11 */
 
 app.listen(3309)
