@@ -156,7 +156,7 @@ const getNoVendidos = async(req,res)=>{
       },
       {
           $match: {
-              "diferencia": [] // Encuentra documentos que no tienen datos en la segunda colección
+              "diferencia": [] // filtra los que no tienen en comun
           }
       }
     ]).toArray()
@@ -176,14 +176,52 @@ const getMascaro = async(req,res)=>{
   }
 }
 
-/* const getMedicamentosPro = async (req,res) = >{
+const getMedicamentosPro = async (req,res) => {
   try {
-    const collection = db.collection('')
+    const collection = db.collection('Medicamentos')
+    const data = await collection.find().toArray();
+    let totales = [0,0,0]
+    data.map((e)=>{
+        if(e.proveedor.nombre == 'ProveedorA'){
+            totales[0]++;
+        }
+        if(e.proveedor.nombre == 'ProveedorB'){
+            totales[1]++
+        }
+        else if(e.proveedor.nombre == 'ProveedorC'){totales[2]++}
+})
+    const mediProvee = [
+        {proveedorA: totales[0]},
+        {proveedorB: totales[1]},
+        {proveedorC: totales[2]},
+    ]
+    //https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/
+    //https://www.mongodb.com/docs/v7.0/reference/method/
+    res.json({
+        CantidadMedicamentos: mediProvee
+    })  
   } catch (error) {
     console.log(error);
   }
 }
- */
+
+const compraParacetamol = async (req,res)=>{
+  try {
+    const collection = db.collection('Ventas');
+    const data = await collection.aggregate([
+      {
+        $unwind: "$medicamentosVendidos" //desenvolver array
+      },
+      {
+        $match: { "medicamentosVendidos.nombreMedicamento": "Paracetamol" } // filtra
+      }
+    ]).toArray();
+    res.json(data)
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 //end points
 app.get('/api/medicamentos/-50', get1Medicamentos50) /** 1 */
 app.get('/api/proveedores', getProveedores) /** 2 */
@@ -196,5 +234,6 @@ app.get('/api/ventas/total', getTotalMedicamentos) /** 8 */
 app.get('/api/noVendidos', getNoVendidos) /** 9 */
 app.get('/api/masCaro', getMascaro) /** 10 */
 app.get('/api/medicamentosPro', getMedicamentosPro) /** 11 */
+app.get('/api/pacientesParacetamol', compraParacetamol) /** 12 */
 
 app.listen(3309)
