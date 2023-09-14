@@ -222,6 +222,17 @@ const compraParacetamol = async (req,res)=>{
   }
 }
 
+const getNoVendidoUltimoA = async (req, res) => {
+    try {
+        const collection = db.collection('Compras');
+        const comprasM2023 = await collection.find({fechaCompra:{$lt: new Date("2023-01-00T00:00:00.000+00:00")}}).toArray();
+
+  res.json({proveedoresNoVentas2023:comprasM2023})
+    } catch (error) {
+        throw "eso no sirve"
+    }
+}
+
 //end points
 app.get('/api/medicamentos/-50', get1Medicamentos50) /** 1 */
 app.get('/api/proveedores', getProveedores) /** 2 */
@@ -235,5 +246,38 @@ app.get('/api/noVendidos', getNoVendidos) /** 9 */
 app.get('/api/masCaro', getMascaro) /** 10 */
 app.get('/api/medicamentosPro', getMedicamentosPro) /** 11 */
 app.get('/api/pacientesParacetamol', compraParacetamol) /** 12 */
+app.get('/api/coso', getNoVendidoUltimoA)
 
 app.listen(3309)
+
+
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
+// vuelvo en 5 min
