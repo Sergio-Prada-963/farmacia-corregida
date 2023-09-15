@@ -252,6 +252,88 @@ const getMenosV2023 = async (req,res)=>{
   }
 }
 
+const allGananciaPro = async (req,res)=>{
+  try {
+    const collection = db.collection('Compras');
+    const data = await collection.find().toArray();
+    let total = [0, 0, 0]
+    data.map((e)=>{
+      if(e.proveedor.nombre == 'ProveedorA'){
+        total[0] = total[0]+(e.medicamentosComprados[0].cantidadComprada*e.medicamentosComprados[0].precioCompra);
+      }
+      if(e.proveedor.nombre == 'ProveedorB'){
+        total[1] = total[1]+(e.medicamentosComprados[0].cantidadComprada*e.medicamentosComprados[0].precioCompra);
+      }
+      else if(e.proveedor.nombre == 'ProveedorC'){
+        total[2] = total[2]+(e.medicamentosComprados[0].cantidadComprada*e.medicamentosComprados[0].precioCompra);
+      }
+    })
+    res.json({"ganancias": [{"ProveedorA":total[0]},{"ProveedorB":total[1]},{"ProveedorC":total[2]}]});
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+/* const getPromedioMedicamentos = async(req , res ) => {
+  try {
+      const collection = db.collection('Ventas')
+      const data = await collection.aggregate([ 
+        {$project: {medicamentosVendidos: 1, _id: 0}},
+        {$group: {
+            _id: null,
+            total: {$sum: "medicamentosVendidos.cantidadVendida"}
+          }
+        }
+      ]).toArray()
+      //const medicamentoPrecio = precioMedicamentosData.map((e)=>{
+      //    return (e.medicamentosVendidos).map((e)=> e.precio)
+      //}).flat(Infinity);
+      //const medicamentosPromedioo = medicamentoPrecio.reduce((a , b)=> a + b, 0 ) / medicamentoPrecio.length;
+      //res.json({
+      //    Precio_promedio: medicamentosPromedioo
+      //})
+      res.json(data)
+  } catch (error) {
+      console.log(error);
+  }
+};
+ */
+
+const getPromedioMedicamentos = async (req, res) => {
+  try {
+    const collection = db.collection('Ventas');
+    const data = await collection.aggregate([
+      {
+        $unwind: "$medicamentosVendidos"
+      },
+      {
+        $group: {
+          _id: 0,
+          cantidad: {
+            $sum: "$medicamentosVendidos.cantidadVendida"
+          },
+          price: {
+            $sum: "$medicamentosVendidos.precio"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          promedioVentas: {
+            $divide: ["$price","$cantidad" ]
+          }
+        }
+      }
+    ]).toArray();
+    res.json(data)
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errooooooor :(" });
+  }
+};
+
 //end points
 app.get('/api/medicamentos/-50', get1Medicamentos50) /** 1 */
 app.get('/api/proveedores', getProveedores) /** 2 */
@@ -268,7 +350,9 @@ app.get('/api/pacientesParacetamol', compraParacetamol) /** 12 */
 app.get('/api/NoVentasUltA', getNoVendidoUltimoA) /** 13 */
 app.get('/api/total/marzo', getVendidoMarzo) /** 14 */
 app.get('/api/menosVendido/2023', getMenosV2023) /** 15 */
-app.get('/api/menosVendido/2023', getMenosV2023) /** 16  .map de one ?*/ 
+app.get('/api/ganancia/proveedor', allGananciaPro) /** 16 */ 
+app.get('/api/promedioCompra/venta', getPromedioMedicamentos) /** 17 */ 
+app.get('/api/promedioCompra/venta', getPromedioMedicamentos) /** 18 la misma .map */ 
 
 app.listen(3309)
 
@@ -294,7 +378,6 @@ app.listen(3309)
 // vuelvo en 5 min
 // vuelvo en 5 min
 // vuelvo en 5 min
-
 // vuelvo en 5 min
 // vuelvo en 5 min
 // vuelvo en 5 min
