@@ -223,14 +223,33 @@ const compraParacetamol = async (req,res)=>{
 }
 
 const getNoVendidoUltimoA = async (req, res) => {
-    try {
-        const collection = db.collection('Compras');
-        const comprasM2023 = await collection.find({fechaCompra:{$lt: new Date("2023-01-00T00:00:00.000+00:00")}}).toArray();
+  try {
+    const collection = db.collection('Compras');
+    const comprasM2023 = await collection.find({fechaCompra:{$lt: new Date("2023-01-00T00:00:00.000+00:00")}}).toArray();
+    res.json({proveedoresNoVentas2023:comprasM2023})
+  } catch (error) {
+    console.log(error);
+  }
+}
 
-  res.json({proveedoresNoVentas2023:comprasM2023})
-    } catch (error) {
-        throw "eso no sirve"
-    }
+const getVendidoMarzo = async (req,res) =>{
+  try {
+    const collection = db.collection('Ventas');
+    const data = await collection.find({fechaVenta: {$gte: new Date('2023-03-01'), $lt: new Date('2023-04-01')}}).toArray()
+    res.json({total: data.length, medicamentos: data})
+  } catch (error) {
+    console.log(error,"error :(");
+  }
+}
+
+const getMenosV2023 = async (req,res)=>{
+  try {
+    const collection = db.collection('Ventas');
+    const data = await collection.find({fechaVenta: {$gte: new Date('2023-01-01'), $lt: new Date('2024-01-01')}}).sort([["medicamentosVendidos.cantidadVendida", 1]]).limit(1).toArray();
+    res.json(data)
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 //end points
@@ -246,7 +265,10 @@ app.get('/api/noVendidos', getNoVendidos) /** 9 */
 app.get('/api/masCaro', getMascaro) /** 10 */
 app.get('/api/medicamentosPro', getMedicamentosPro) /** 11 */
 app.get('/api/pacientesParacetamol', compraParacetamol) /** 12 */
-app.get('/api/coso', getNoVendidoUltimoA)
+app.get('/api/NoVentasUltA', getNoVendidoUltimoA) /** 13 */
+app.get('/api/total/marzo', getVendidoMarzo) /** 14 */
+app.get('/api/menosVendido/2023', getMenosV2023) /** 15 */
+app.get('/api/menosVendido/2023', getMenosV2023) /** 16  .map de one ?*/ 
 
 app.listen(3309)
 
