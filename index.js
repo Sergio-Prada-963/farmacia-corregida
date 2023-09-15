@@ -333,6 +333,66 @@ const getPromedioMedicamentos = async (req, res) => {
     res.status(500).json({ error: "Errooooooor :(" });
   }
 };
+
+const ventasEmpleados = async (req,res)=>{
+  try {
+    const collection = db.collection('Ventas')
+    const data = await collection.aggregate([
+      {$unwind: "$medicamentosVendidos"},
+      {
+        $group:{
+          _id: "$empleado.nombre",
+          total: {
+            $sum: "$medicamentosVendidos.cantidadVendida"
+          }
+        }
+      }
+    ]).toArray();
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errooooooor :(" });
+  }
+}
+
+const medicaExpira2024 = async (req,res)=>{
+  try {
+    const collection = db.collection('Medicamentos');
+    const data = await collection.find({fechaExpiracion: {$gte: new Date('2024-01-01')}}).toArray()
+    res.json(data)
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errooooooor :(" });
+  }
+}
+
+const mas5Ventas = async (req,res)=>{
+  try {
+    const collection = db.collection('Ventas')
+    const data = await collection.aggregate([
+      {$unwind: "$medicamentosVendidos"},
+      {
+        $group:{
+          _id: "$empleado.nombre",
+          total: {
+            $sum: "$medicamentosVendidos.cantidadVendida"
+          }
+        }
+      }
+    ]).toArray();
+    const data2 = []
+    data.map(e=>{
+      if(e.total > 5){
+        data2.push({"empleado": e._id, "Ventas": e.total})
+      }
+
+    })
+    res.json(data2);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errooooooor :(" });
+  }
+}
  
 //end points
 app.get('/api/medicamentos/-50', get1Medicamentos50) /** 1 */
@@ -352,7 +412,9 @@ app.get('/api/total/marzo', getVendidoMarzo) /** 14 */
 app.get('/api/menosVendido/2023', getMenosV2023) /** 15 */
 app.get('/api/ganancia/proveedor', allGananciaPro) /** 16 */ 
 app.get('/api/promedioCompra/venta', getPromedioMedicamentos) /** 17 */ 
-app.get('/api/promedioCompra/venta', getPromedioMedicamentos) /** 18 la misma .map */ 
+app.get('/api/ventasEmpleado', ventasEmpleados) /** 18 */ 
+app.get('/api/expira/2024', medicaExpira2024) /** 19 */ 
+app.get('/api/empleados/mas5', mas5Ventas) /** 20 */ 
 
 app.listen(3309)
 
