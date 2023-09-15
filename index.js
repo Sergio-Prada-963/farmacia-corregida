@@ -333,7 +333,7 @@ const getPromedioMedicamentos = async (req, res) => {
     res.status(500).json({ error: "Errooooooor :(" });
   }
 };
-
+ 
 //end points
 app.get('/api/medicamentos/-50', get1Medicamentos50) /** 1 */
 app.get('/api/proveedores', getProveedores) /** 2 */
